@@ -3,6 +3,7 @@ package com.troy.tinnews.network;
 import android.content.Context;
 
 import com.ashokvarma.gander.GanderInterceptor;
+import com.facebook.stetho.okhttp3.StethoInterceptor;
 
 import java.io.IOException;
 
@@ -22,8 +23,7 @@ public class RetrofitClient {
 
     public static Retrofit newInstance(Context context) {
         OkHttpClient okHttpClient = new OkHttpClient.Builder()
-                .addInterceptor((Interceptor) new HeaderInterceptor())
-                .addInterceptor(new GanderInterceptor(context).showNotification(true))
+                .addInterceptor(new HeaderInterceptor())
                 .build();
         return new Retrofit.Builder()
                 .baseUrl(BASE_URL)
