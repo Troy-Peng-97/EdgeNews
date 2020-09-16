@@ -13,11 +13,24 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.troy.tinnews.R;
+import com.troy.tinnews.databinding.FragmentHomeBinding;
+import com.troy.tinnews.model.Article;
 import com.troy.tinnews.repository.NewsRepository;
 import com.troy.tinnews.repository.NewsViewModelFactory;
+import com.yuyakaido.android.cardstackview.CardStackLayoutManager;
+import com.yuyakaido.android.cardstackview.CardStackListener;
+import com.yuyakaido.android.cardstackview.Direction;
+import com.yuyakaido.android.cardstackview.Duration;
+import com.yuyakaido.android.cardstackview.StackFrom;
+import com.yuyakaido.android.cardstackview.SwipeAnimationSetting;
 
-public class HomeFragment extends Fragment {
+import java.util.List;
+
+public class HomeFragment extends Fragment implements CardStackListener {
     private HomeViewModel viewModel;
+    private FragmentHomeBinding binding;
+    private CardStackLayoutManager layoutManager;
+    private List<Article> articles;
     public HomeFragment() {
         // Required empty public constructor
     }
@@ -27,12 +40,36 @@ public class HomeFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_home, container, false);
+        binding = FragmentHomeBinding.inflate(inflater, container, false);
+        return binding.getRoot();
     }
 
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        // Setup CardStackView
+        CardSwipeAdapter swipeAdapter = new CardSwipeAdapter();
+        layoutManager = new CardStackLayoutManager(requireContext(), this);
+        layoutManager.setStackFrom(StackFrom.Top);
+        binding.homeCardStackView.setLayoutManager(layoutManager);
+        binding.homeCardStackView.setAdapter(swipeAdapter);
 
+        // Handle like unlike button clicks
+        binding.homeLikeButton.setOnClickListener(v -> {
+            SwipeAnimationSetting setting = new SwipeAnimationSetting.Builder()
+                    .setDirection(Direction.Right)
+                    .setDuration(Duration.Normal.duration)
+                    .build();
+        });
+
+        binding.homeUnlikeButton.setOnClickListener(v -> {
+                    SwipeAnimationSetting setting = new SwipeAnimationSetting.Builder()
+                            .setDirection(Direction.Left)
+                            .setDuration(Duration.Normal.duration)
+                            .build();
+                    layoutManager.setSwipeAnimationSetting(setting);
+                    binding.homeCardStackView.swipe();
+                }
+        );
         NewsRepository repository = new NewsRepository(getContext());
         viewModel = new ViewModelProvider(this, new NewsViewModelFactory(repository))
                 .get(HomeViewModel.class);
@@ -43,13 +80,48 @@ public class HomeFragment extends Fragment {
                         getViewLifecycleOwner(),
                         newsResponse -> {
                             if (newsResponse != null) {
-                                Log.d("HomeFragment", newsResponse.toString());
+                                articles = newsResponse.articles;
+                                swipeAdapter.setArticles(articles);
                             }
                         });
 
     }
 
 
+    @Override
+    public void onCardDragging(Direction direction, float ratio) {
+
+    }
+
+    @Override
+    public void onCardSwiped(Direction direction) {
+        if (direction == Direction.Left) {
+            Log.d("CardStackView", "Unliked " + layoutManager.getTopPosition());
+        } else if (direction == Direction.Right) {
+            Log.d("CardStackView", "Liked "  + layoutManager.getTopPosition());
+        }
+    }
+
+    @Override
+    public void onCardRewound() {
+
+
+    }
+
+    @Override
+    public void onCardCanceled() {
+
+    }
+
+    @Override
+    public void onCardAppeared(View view, int position) {
+
+    }
+
+    @Override
+    public void onCardDisappeared(View view, int position) {
+
+    }
 }
 
 
